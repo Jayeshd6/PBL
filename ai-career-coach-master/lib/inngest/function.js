@@ -1,9 +1,7 @@
 import { db } from "@/lib/prisma";
 import { inngest } from "./client";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+import { GoogleGenAI } from "@google/genai";
+const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
 
 export const generateIndustryInsights = inngest.createFunction(
   { name: "Generate Industry Insights" },
@@ -39,7 +37,10 @@ export const generateIndustryInsights = inngest.createFunction(
       const res = await step.ai.wrap(
         "gemini",
         async (p) => {
-          return await model.generateContent(p);
+          return await ai.models.generateContent({
+  model: process.env.GEMINI_MODEL_NAME,
+  contents: "Tell me a story in 300 words.",
+});
         },
         prompt
       );

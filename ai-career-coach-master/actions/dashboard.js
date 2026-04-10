@@ -2,8 +2,7 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import { GoogleGenAI } from "@google/genai";
 export const generateAIInsights = async (industry) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -12,8 +11,9 @@ export const generateAIInsights = async (industry) => {
     );
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  //const ai = new GoogleGenAI(apiKey);
+  const ai = new GoogleGenAI({apiKey: apiKey});
+  
 
   const prompt = `
           Analyze the current state of the ${industry} industry and provide insights in ONLY the following JSON format without any additional notes or explanations:
@@ -35,9 +35,12 @@ export const generateAIInsights = async (industry) => {
           Include at least 5 skills and trends.
         `;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text();
+
+   const result = await ai.models.generateContent({
+  model: process.env.GEMINI_MODEL_NAME,
+  contents: prompt,
+});
+  const text = result.text;
   const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
 
   return JSON.parse(cleanedText);
