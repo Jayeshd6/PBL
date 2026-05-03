@@ -42,7 +42,7 @@ export async function generateCoverLetter(data) {
 
   try {
     const result = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL_NAME,
+      model: process.env.GEMINI_MODEL_NAME || "gemma-3-27b-it",
       contents: prompt,
     });
     const content = result.text.trim();

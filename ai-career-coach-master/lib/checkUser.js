@@ -33,5 +33,32 @@ export const checkUser = async () => {
     return newUser;
   } catch (error) {
     console.log(error.message);
+    // If concurrent requests or email conflicts happen, handle them gracefully.
+    try {
+      const email = user.emailAddresses[0].emailAddress;
+      const existingUserByEmail = await db.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUserByEmail) {
+        // If the email exists but clerkUserId is different (e.g. account deleted and recreated in Clerk)
+        if (existingUserByEmail.clerkUserId !== user.id) {
+          return await db.user.update({
+            where: { email },
+            data: { clerkUserId: user.id },
+          });
+        }
+        return existingUserByEmail;
+      }
+    } catch (e) {
+      console.error(e.message);
+    }
+    
+    // Fallback just in case
+    return await db.user.findUnique({
+      where: {
+        clerkUserId: user.id,
+      },
+    });
   }
 };

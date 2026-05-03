@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { GoogleGenAI } from "@google/genai";
+import { checkUser } from "@/lib/checkUser";
 export const generateAIInsights = async (industry) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -37,7 +38,7 @@ export const generateAIInsights = async (industry) => {
 
 
    const result = await ai.models.generateContent({
-  model: process.env.GEMINI_MODEL_NAME,
+  model: process.env.GEMINI_MODEL_NAME || "gemma-3-27b-it",
   contents: prompt,
 });
   const text = result.text;
@@ -50,12 +51,25 @@ export async function getIndustryInsights() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { clerkUserId: userId },
     include: {
       industryInsight: true,
     },
   });
+
+  if (!user) {
+    user = await checkUser();
+    if (user) {
+      // Re-fetch to include industryInsight if checkUser created it
+      user = await db.user.findUnique({
+        where: { clerkUserId: userId },
+        include: {
+          industryInsight: true,
+        },
+      });
+    }
+  }
 
   if (!user) throw new Error("User not found");
 

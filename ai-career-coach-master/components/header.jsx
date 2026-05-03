@@ -7,6 +7,7 @@ import {
   GraduationCap,
   ChevronDown,
   StarsIcon,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
@@ -26,13 +27,13 @@ export default async function Header() {
     <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-md z-50 supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/">
-        <Image
-          src={"/logo.png"}
-          alt="Career Mate Logo"
-          width={300}
-          height={60}
-          className="h-20 w-auto object-contain"
-/>
+          <Image
+            src={"/logo.png"}
+            alt="Career Mate Logo"
+            width={300}
+            height={60}
+            className="h-20 w-auto object-contain"
+          />
         </Link>
 
         {/* Action Buttons */}
@@ -80,6 +81,16 @@ export default async function Header() {
                   <Link href="/interview" className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4" />
                     Interview Prep
+                  </Link>
+                </DropdownMenuItem>
+                {/* ── NEW: Career Prediction ── */}
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/career-prediction"
+                    className="flex items-center gap-2"
+                  >
+                    <Target className="h-4 w-4" />
+                    Career Prediction
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
