@@ -8,57 +8,50 @@ export const checkUser = async () => {
     return null;
   }
 
+  const email = user.emailAddresses[0].emailAddress;
+  const name = `${user.firstName} ${user.lastName}`;
+
   try {
+    // Step 1: Try to find user by clerkUserId (the happy path)
     const loggedInUser = await db.user.findUnique({
-      where: {
-        clerkUserId: user.id,
-      },
+      where: { clerkUserId: user.id },
     });
 
     if (loggedInUser) {
       return loggedInUser;
     }
 
-    const name = `${user.firstName} ${user.lastName}`;
+    // Step 2: Check if the email already exists (e.g. user recreated their Clerk account)
+    const existingUserByEmail = await db.user.findUnique({
+      where: { email },
+    });
 
-    const newUser = await db.user.create({
+    if (existingUserByEmail) {
+      // Update the stale clerkUserId to the new one
+      return await db.user.update({
+        where: { email },
+        data: {
+          clerkUserId: user.id,
+          name,
+          imageUrl: user.imageUrl,
+        },
+      });
+    }
+
+    // Step 3: Brand new user — safe to create
+    return await db.user.create({
       data: {
         clerkUserId: user.id,
         name,
         imageUrl: user.imageUrl,
-        email: user.emailAddresses[0].emailAddress,
+        email,
       },
     });
-
-    return newUser;
   } catch (error) {
-    console.log(error.message);
-    // If concurrent requests or email conflicts happen, handle them gracefully.
-    try {
-      const email = user.emailAddresses[0].emailAddress;
-      const existingUserByEmail = await db.user.findUnique({
-        where: { email },
-      });
-
-      if (existingUserByEmail) {
-        // If the email exists but clerkUserId is different (e.g. account deleted and recreated in Clerk)
-        if (existingUserByEmail.clerkUserId !== user.id) {
-          return await db.user.update({
-            where: { email },
-            data: { clerkUserId: user.id },
-          });
-        }
-        return existingUserByEmail;
-      }
-    } catch (e) {
-      console.error(e.message);
-    }
-    
-    // Fallback just in case
+    console.error("checkUser error:", error.message);
+    // Last resort fallback
     return await db.user.findUnique({
-      where: {
-        clerkUserId: user.id,
-      },
+      where: { clerkUserId: user.id },
     });
   }
 };

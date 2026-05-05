@@ -9,7 +9,16 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
+// Webhooks must be public — Clerk's servers POST to these, not logged-in users
+const isPublicRoute = createRouteMatcher(["/api/webhooks/(.*)"]);
+
+
 export default clerkMiddleware(async (auth, req) => {
+  // Allow webhooks to pass through without authentication
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
+  }
+
   const { userId } = await auth();
 
   if (!userId && isProtectedRoute(req)) {
